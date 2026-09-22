@@ -52,7 +52,9 @@ Hyperparameters that stay at Ultralytics defaults unless a run log entry justifi
 - **Fails loudly:** each cell checks its precondition (GPU present, hash matches, class names equal `data.yaml`) and stops with a plain message.
 - **Outputs cleared** before commit; the notebook is generated in Phase 3, not before.
 
-## 5. Notebook structure (`notebooks/colab_train.ipynb`, to be generated and committed with outputs cleared)
+## 5. Notebook structure (`notebooks/colab_train.ipynb`, generated 2026-09-22, committed with outputs cleared)
+
+Built and committed. Cell 2 (install) installs `requirements-colab.txt`, not `requirements.lock`, on the first run (no lock exists yet); the notebook's own export step writes a `requirements.lock` into each run's Drive export folder from that run's actual `pip freeze`. The cells below are the template each run follows; the notebook itself also includes the run-matrix (T1 to T3), comparison, and paste-back sections described in section 4a.
 
 Each section starts with a markdown cell stating what it does and which artifact it produces (this becomes Chapter 5.4.1 narrative). Code comments follow the repo rule (why only).
 
