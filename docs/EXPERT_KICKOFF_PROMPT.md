@@ -106,7 +106,7 @@ Phase 2 (Pipeline P0). Goal: gate G2. Read docs/02 fully. Implement the seven mo
 tests from Phase 0, using COCO yolov8n stand-in with the class map in doc 03 section 4. Letterbox
 preprocessing with exact inverse box mapping (D-07). DeepSORT via deep-sort-realtime, confirmed
 tracks only. Rules as pure functions, all thresholds from config. Per-stage timers. Annotated video
-writer. Run manifest in every output. Process 3 test sequences end to end, log T0 (zero-shot
+writer. Run manifest in every output. Process 3 validation sequences end to end (never test sequences, D-23), log T0 (zero-shot
 baseline) through the evaluation harness on val only. Keep every stand-in output labelled.
 ```
 
