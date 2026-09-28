@@ -149,10 +149,14 @@ labelled checkpoints (called commits). GitHub is where that history is stored on
 ## 5. How to actually run it and see it work
 
 There is a command-line interface (a CLI): you type a command in the terminal, it runs, and it
-prints results. This project deliberately does **not** have a website or app-style interface
-(that was ruled out early on to keep the project's scope manageable and matches what was proposed
-to the supervisor). The CLI plus the annotated video output plus the CSV file together are the
-interface.
+prints results. The CLI plus the annotated video output plus the CSV file together are the
+official interface, and this is what the proposal describes and what gets evaluated as the core
+deliverable (decision D-13, `docs/07_DECISIONS_RISKS.md`).
+
+A supplementary web dashboard also exists (`webapp/`, decision D-25): upload a video in a browser,
+watch it process live, and browse past runs, with a login screen in front of it. It is a bonus
+showcase layer that calls this same CLI pipeline underneath, not a replacement for it, and it does
+not change how the core system is evaluated. See `webapp/README.md` for how to run it.
 
 ```bash
 cd ~/IS/traffic-incident-detection
@@ -213,22 +217,20 @@ when everything in its row is true.
 
 ## 7. What is pending right now, in order
 
-1. **You:** finish downloading UA-DETRAC (images archive in progress; three small annotation
-   files already done).
-2. **Me, once the annotation files are available:** build the actual data-conversion code for
-   UA-DETRAC (parsing its files, building the training/testing split, checking for accidental
-   overlap between them).
-3. **Both of us:** decide the final list of vehicle categories the model should recognise, now
-   that we know what both datasets actually contain (a couple of specific judgement calls are
-   waiting on you, listed in `docs/07_DECISIONS_RISKS.md` under D-04).
-4. **You:** run the prepared Colab notebook to actually train the model (three separate attempts,
-   compared).
-5. **Me:** once training results are pasted back, plug the trained model in, measure the five
-   official metrics, and start writing the results into the thesis chapters.
-6. **You:** confirm the real submission and demonstration dates, and book time with your
-   supervisor to approve how "incidents" are graded (since neither dataset has real crash data,
-   a three-tier grading method was designed and needs the supervisor's sign-off before it counts
-   as final).
+1. Finish downloading UA-DETRAC (images archive in progress; three small annotation files already
+   done).
+2. Once the annotation files are available, build the actual data-conversion code for UA-DETRAC
+   (parsing its files, building the training/testing split, checking for accidental overlap
+   between them).
+3. Decide the final list of vehicle categories the model should recognise, now that both datasets'
+   real content is known (a couple of specific judgement calls are open, listed in
+   `docs/07_DECISIONS_RISKS.md` under D-04).
+4. Run the prepared Colab notebook to actually train the model (three separate attempts, compared).
+5. Once training results are pasted back, plug the trained model in, measure the five official
+   metrics, and start writing the results into the thesis chapters.
+6. Confirm the real submission and demonstration dates, and book time with the supervisor to
+   approve how "incidents" are graded (since neither dataset has real crash data, a three-tier
+   grading method was designed and needs the supervisor's sign-off before it counts as final).
 
 ---
 

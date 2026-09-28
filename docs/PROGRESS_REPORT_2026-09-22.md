@@ -39,7 +39,7 @@ drivers, pedestrians, live streams, or web deployment.
 Gate G0 passed: a Python 3.10.20 environment, the package skeleton, and a fail-closed
 configuration validator, all test-covered before any pipeline logic was written.
 
-- **Environment:** Python 3.10.20 (deadsnakes), 55 pinned dependencies in `requirements.txt`
+- **Environment:** Python 3.10.20, 55 pinned dependencies in `requirements.txt`
   (CPU-only PyTorch 2.14.0, OpenCV 4.14.0, Ultralytics 8.4.158, DeepSORT 1.3.2), reproducible on a
   clean install.
 - **Package `trafficwatch`:** typed dataclasses for every value that crosses a module boundary
