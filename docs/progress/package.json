@@ -1,0 +1,8 @@
+{
+  "name": "progress-report-builder",
+  "private": true,
+  "description": "Builds docs/PROGRESS_REPORT.docx and .md from report.json",
+  "dependencies": {
+    "docx": "^9.8.0"
+  }
+}
