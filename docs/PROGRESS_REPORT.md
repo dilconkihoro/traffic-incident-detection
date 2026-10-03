@@ -2,7 +2,7 @@
 
 Dilcon Kuria Kihoro, BBIT 4D, Strathmore University  
 Supervisor: Mr. Titus Tunduny  
-2 October 2026  
+3 October 2026  
 This is a living document. I update it as I go, so it always reflects where the project actually stands, not just where it stood when I last wrote a report.
 
 ## Where I am right now
@@ -13,9 +13,9 @@ At a glance, here is where each phase of my plan stands:
 
 - Phase 0, Foundation: complete.
 - Phase 1, Data: complete. Both datasets are downloaded, verified, and converted into one real training-ready dataset, split by sequence and leakage-checked.
-- Phase 2, Pipeline: built and tested end to end on a stand-in model, including on three real validation sequences. One item (a zero-shot metric baseline) needs an evaluation harness I have not built yet.
+- Phase 2, Pipeline: built and tested end to end on a stand-in model, including on three real validation sequences. The zero-shot baseline is now measured: detector scores on my full validation split and a latency measurement on a full real sequence.
 - Phase 3, Training: the dataset and the Colab notebook are both ready. I have not run the notebook yet; that is the one piece of this project that genuinely has to happen on Colab, not here.
-- Phases 4 to 7 (integration, evaluation, documentation, demo): not started, since each depends on a trained model.
+- Phase 5, Evaluation: the zero-shot baseline is done. The tracker check, incident-level precision and recall, and the single final test-split run wait for a trained model. Phases 4, 6 and 7 (integration, documentation, demo) are not started.
 - A supplementary web dashboard: built, tested on real videos, and in use for demonstration, on top of the core system.
 
 ## What I have completed
@@ -42,7 +42,19 @@ All seven stages of the pipeline run end to end: reading the video, resizing fra
 
 I hand-computed the correct answer for every one of my three behaviour rules across 41 test cases, covering the clean positive and negative case for each rule and the exact boundary of every threshold, and all 41 pass with the rules implemented exactly as designed, with no shortcuts taken to make them pass. I also ran real UA-DETRAC video clips (not synthetic ones) through the full pipeline: on the first short clip, 21 real vehicles were correctly detected and tracked from the raw footage and the system produced a valid annotated video. I have also produced three short, real demonstration clips, one per incident type, each confirmed to make the real detector and rules flag it, and each re-run a second time to confirm the same result: one for an abrupt stop, one for a lane obstruction (shown as a time-lapse, since that rule needs 15 seconds of real time to fire), and one for a collision-like convergence (the flagged moment there is a car passing behind a stopped bus from the camera's angle, a real rule trigger worth showing but not a real crash, and I am noting that honestly rather than overselling it). I also tried a close-up crash-test video, and the system did not flag the collision. I traced why, and it is a limit of scope rather than a bug: the rules are built for a fixed camera looking down a road, where vehicles are small in the frame. In the crash-test video the cars fill most of the frame, the detector only sees them intermittently while they approach and hit, and by the time both are tracked steadily they are already stopped, so there is no approach for the collision rule to measure. I will record this as a limitation in my write-up rather than tune my thresholds to a clip that is outside my scope. Thresholds have not been tuned on real data yet, so these are “the system works end to end” milestones, not a formal accuracy result.
 
-I have now run the pipeline on three of my real validation sequences (one each in sunny, cloudy, and rainy weather, matching how I chose the validation set), not just the one sample clip from before: real detections, real tracking, a valid incident log and annotated video for each. The other item, a zero-shot accuracy baseline, is still genuinely open: it needs a real precision, recall, and mAP evaluation against ground truth, which needs an evaluation harness I have not built yet. That is real remaining work, not a formality, and I am not going to claim it is done before it is.
+I have now run the pipeline on three of my real validation sequences (one each in sunny, cloudy, and rainy weather, matching how I chose the validation set), not just the one sample clip from before: real detections, real tracking, a valid incident log and annotated video for each. The zero-shot accuracy baseline is now measured as well, in the section below.
+
+### Zero-shot baseline: what the stand-in model scores before any training
+
+Before training, I measured how well the off-the-shelf model already does on my validation data, so the trained model has a real starting point to beat. I ran the stand-in detector over all 2,572 UA-DETRAC validation images and all 300 DhakaAI validation images, and scored every detection against my own ground-truth labels. A detection counts only when its box overlaps a real vehicle box by at least half (intersection-over-union of 0.5). This is a stand-in result, labelled as such throughout, and it does not appear in any final results table.
+
+On UA-DETRAC validation, at my configured confidence threshold of 0.35, precision is 0.939 and recall is 0.761. Mean average precision is 0.377 at that overlap threshold, and 0.223 averaged over thresholds from 0.5 to 0.95. Recall is highest in sunny weather (0.819) and lowest in rain (0.714), while precision stays between 0.93 and 0.97 in all four conditions. On the DhakaAI validation images, a different camera and traffic mix, performance drops sharply: precision 0.678, recall 0.519, mean average precision 0.323 at 0.5. That gap is why I expect training on those images to matter.
+
+The per-class numbers explain most of the average. Car and bus score reasonably (average precision 0.786 and 0.684 on UA-DETRAC validation). The off-the-shelf model has no van class, so it can never detect a van: its vans come out as cars, and van scores zero. The other class, fed only by COCO's truck class, scores 0.040. I am reporting those zeros rather than hiding them, because they are real limits of the zero-shot model and are exactly what training on my four classes is meant to fix.
+
+Latency on my development machine (CPU only, no GPU): the full pipeline took a mean of 498.6 milliseconds per frame over 1,440 measured frames of a real 1,490-frame validation sequence, about two frames per second. Tracking took the largest share, 326 milliseconds per frame, ahead of detection at 164 milliseconds. That is the first thing I would optimise, and it means the system is not yet real-time on this machine.
+
+Every number here comes from a recorded run with its configuration, weights checksum, and data manifest attached, and each is written up with its run identifier in my evaluation log. One honest caveat: the detector run was made with uncommitted code changes, so I will repeat it from a clean checkout before any of these figures goes into my thesis.
 
 ### Phase 3: Training, preparation
 
@@ -60,7 +72,7 @@ Testing it on real videos taught me several things that I have since fixed. Brow
 
 ## Quality evidence
 
-I take testing seriously throughout, not just at the end. The fast core test suite has 474 tests passing with zero failures, and the 41 hand-computed rule tests and 2 real-model tests, which I run separately because they are slower, pass as well. The dashboard's backend has 63 tests, including one that drives a real video through the real model end to end, all passing. My linter reports zero issues across the whole codebase, and the dashboard's frontend builds and lints cleanly. Building the data converter also caught two real bugs before they could quietly corrupt the dataset (described above), both found by actually running it against the real archives rather than trusting a smaller test fixture alone. Every run of the system writes a full reproducibility record, so any number I eventually report can be traced back to exactly the code, configuration, and data that produced it.
+I take testing seriously throughout, not just at the end. The fast core test suite has 535 tests passing with zero failures, and the 41 hand-computed rule tests and 2 real-model tests, which I run separately because they are slower, pass as well. The dashboard's backend has 63 tests, including one that drives a real video through the real model end to end, all passing. My linter reports zero issues across the whole codebase, and the dashboard's frontend builds and lints cleanly. Building the data converter also caught two real bugs before they could quietly corrupt the dataset (described above), both found by actually running it against the real archives rather than trusting a smaller test fixture alone. Every run of the system writes a full reproducibility record, so any number I eventually report can be traced back to exactly the code, configuration, and data that produced it.
 
 ## Decisions I have made along the way, and why
 
@@ -77,7 +89,7 @@ The full list, with rationale for each, is in my decision log.
 ## What is still pending, in the order I plan to do it
 
 1. Run the Colab training notebook myself: the three-run comparison across model sizes and datasets. The dataset and notebook are both ready; this is the next real step, and it is mine to do, not something that finishes inside a terminal session.
-2. Build the zero-shot evaluation harness (precision, recall, mAP against ground truth) to close the one remaining item in Phase 2 and give me a true before-and-after comparison once training is done.
+2. Finish the evaluation: the tracker check, incident-level precision, recall and false-alarm rate against ground truth, and the single final test-split run once thresholds are frozen.
 3. Once a trained model exists: plug it in, calibrate the rule thresholds on real validation data, run the full five-metric evaluation, and start writing the results into my thesis chapters.
 4. Confirm my actual submission and demonstration dates with my supervisor, and get sign-off on the three-tier incident evaluation approach and on how the web dashboard should be described in the final submission.
 
