@@ -1,4 +1,4 @@
-"""Typed records that cross module boundaries (proposal 3.2.2)."""
+"""Typed records that cross module boundaries."""
 
 from __future__ import annotations
 

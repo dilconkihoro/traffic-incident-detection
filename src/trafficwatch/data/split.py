@@ -1,4 +1,4 @@
-"""Sequence-level splits and the leakage check (CLAUDE.md ML rules 1 and 2)."""
+"""Sequence-level splits and the leakage check (project ML rules 1 and 2)."""
 
 from __future__ import annotations
 

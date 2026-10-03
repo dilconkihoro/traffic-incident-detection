@@ -1,6 +1,6 @@
 # 02. Architecture, contracts, and behaviour rules
 
-Design source for Chapter 4 and for the code. All threshold values here are **PROVISIONAL defaults**; they are calibrated on the validation split in Phase 4 and then frozen in `configs/pipeline.yaml`.
+Design source for Report section 4 and for the code. All threshold values here are **PROVISIONAL defaults**; they are calibrated on the validation split in Phase 4 and then frozen in `configs/pipeline.yaml`.
 
 ## 1. Architecture
 
@@ -106,7 +106,7 @@ output:
 
 Startup validation refuses to run when: weights missing or class names differ from the model card; `weights_kind` is `coco_standin` and the run is flagged as final; any threshold missing or out of range; video unreadable; zone polygons malformed.
 
-## 5. Behaviour rules (the part the proposal leaves open)
+## 5. Behaviour rules (the part the specification leaves open)
 
 Common quantities, per confirmed track:
 
@@ -119,7 +119,7 @@ Common quantities, per confirmed track:
 
 Flag when, for one track: median speed over `window_before_s` is at least `v_move`, speed over the last `window_after_s` is at most `v_stop`, drop ratio is at least `drop_ratio`, and the deceleration took at most `max_decel_s`.
 
-Suppress (false-alarm control, addresses the proposal's own crossing example): a leading track within `queue_gap_bh` body heights ahead is also stopping or stopped (queue); at least `global_slowdown_fraction` of active tracks dropped speed in the same window (congestion, signal); the vehicle is inside an `exclusion` zone (stop line, crossing).
+Suppress (false-alarm control, addresses the specification's own crossing example): a leading track within `queue_gap_bh` body heights ahead is also stopping or stopped (queue); at least `global_slowdown_fraction` of active tracks dropped speed in the same window (congestion, signal); the vehicle is inside an `exclusion` zone (stop line, crossing).
 
 ### 5.2 Prolonged lane obstruction
 
@@ -173,7 +173,7 @@ The rule text above leaves these open. The target tests in `tests/test_rules_*.p
 
 Optional `tracks.csv`: video_id, frame_idx, t_s, track_id, cls_name, x1, y1, x2, y2 (the tracker does not expose a detection confidence). Used by tracker evaluation and by white-box replay.
 
-## 7. ERD (Chapter 4 draft)
+## 7. ERD (Report section 4 draft)
 
 ```mermaid
 erDiagram
@@ -216,7 +216,7 @@ erDiagram
     }
 ```
 
-## 8. Sequence (one detection cycle, Chapter 4 draft)
+## 8. Sequence (one detection cycle, Report section 4 draft)
 
 ```mermaid
 sequenceDiagram
@@ -248,7 +248,7 @@ sequenceDiagram
     CLI-->>U: incidents.csv, annotated.mp4, latency.json
 ```
 
-## 9. Class diagram (Chapter 4 draft)
+## 9. Class diagram (Report section 4 draft)
 
 ```mermaid
 classDiagram

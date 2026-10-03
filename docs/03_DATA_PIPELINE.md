@@ -1,8 +1,8 @@
 # 03. Data pipeline (acquisition to Colab-ready dataset)
 
-Follows a seven-step ML process: collection, EDA, cleaning, preparation, training, evaluation, deployment. This file covers steps 1 to 4. Each step produces an artifact and a written insight for Chapter 5.3.
+Follows a seven-step ML process: collection, EDA, cleaning, preparation, training, evaluation, deployment. This file covers steps 1 to 4. Each step produces an artifact and a written insight for Report section 5.3.
 
-Items marked **VERIFY** are recalled facts that must be checked against the downloaded release before they are written into any chapter.
+Items marked **VERIFY** are recalled facts that must be checked against the downloaded release before they are written into any report.
 
 **Status (2026-10-02): built.** `scripts/convert_to_yolo.py` and `scripts/eda_dataset.py` exist and
 have both been run for real against the full downloaded archives, not only tested against
@@ -18,7 +18,7 @@ is the uploader's original name, never the file actually in the archive (every i
 its label by sharing the XML's own stem instead); two DhakaAI files (`Pias (359).xml`,
 `Pias (360).xml`) embed `<width>0</width><height>0</height>` and are skipped, the same class of
 upstream error as the already-known `231.xml` anomaly. Full details in
-`docs/logs/IMPLEMENTATION_RUN_LOG.md`.
+the implementation run log.
 
 ## 1. Step map
 
@@ -34,14 +34,14 @@ upstream error as the already-known `231.xml` anomaly. Full details in
 | Item | UA-DETRAC | DhakaAI |
 |---|---|---|
 | Citation | Wen et al. (2020) | Shihavuddin and Rashid (2020), DOI 10.7910/DVN/POREXF |
-| Content | **Confirmed 2026-09-22 (annotation archives opened; the image archive is still downloading, not yet inspected):** one XML file per sequence (`<sequence name="MVI_20011">`), `<frame num="N"><target_list><target id="K"><box left top width height/><attribute vehicle_type speed orientation trajectory_length truncation_ratio/></target></target_list></frame>` repeated per frame; `id` is the persistent track ID across frames within a sequence, matching the proposal's "track IDs" claim. Box format is `left/top/width/height`, not `xmin/ymin/xmax/ymax` like DhakaAI: the converter must not assume one shared box format across datasets | **Confirmed 2026-09-22 (`train.rar` opened, all 3,003 annotation files parsed):** still images only, not sequences, not fixed-camera. Pascal VOC XML, one file per image (`<object><name>...<bndbox><xmin><ymin><xmax><ymax></bndbox></object>`), image `<width>`/`<height>` embedded. Image sizes are highly variable (428 distinct sizes across 3,003 images; common ones 1920x1080, 1280x720, and several phone-camera resolutions up to 4160x3120, both landscape and portrait) and file paths inside the XML (`E:\Datasets\Dataset\Images\...`) point at a Windows folder on the depositor's machine: this is a curated, crowd-sourced photo collection, not frames pulled from a fixed camera. Confirms P-03 |
+| Content | **Confirmed 2026-09-22 (annotation archives opened; the image archive is still downloading, not yet inspected):** one XML file per sequence (`<sequence name="MVI_20011">`), `<frame num="N"><target_list><target id="K"><box left top width height/><attribute vehicle_type speed orientation trajectory_length truncation_ratio/></target></target_list></frame>` repeated per frame; `id` is the persistent track ID across frames within a sequence, matching the specification's "track IDs" claim. Box format is `left/top/width/height`, not `xmin/ymin/xmax/ymax` like DhakaAI: the converter must not assume one shared box format across datasets | **Confirmed 2026-09-22 (`train.rar` opened, all 3,003 annotation files parsed):** still images only, not sequences, not fixed-camera. Pascal VOC XML, one file per image (`<object><name>...<bndbox><xmin><ymin><xmax><ymax></bndbox></object>`), image `<width>`/`<height>` embedded. Image sizes are highly variable (428 distinct sizes across 3,003 images; common ones 1920x1080, 1280x720, and several phone-camera resolutions up to 4160x3120, both landscape and portrait) and file paths inside the XML (`E:\Datasets\Dataset\Images\...`) point at a Windows folder on the depositor's machine: this is a curated, crowd-sourced photo collection, not frames pulled from a fixed camera. Confirms P-03 |
 | Official split | **Confirmed 2026-09-22, corrected 2026-10-02:** `DETRAC-Train-Annotations-XML.zip` holds 60 sequence files, `DETRAC-Test-Annotations-XML.zip` holds 40 (60 + 40 = 100, matching the citation's "100 sequences" exactly). An earlier count of 61/41 from a quick listing was wrong; `ls` on the extracted archives and a full parse with `trafficwatch.data.ua_detrac.parse_directory` both independently give 60 and 40, corrected here rather than carried forward. Downloaded from a live mirror, not the dead official host (see Availability). The matching image archive (`DETRAC-Images.zip`, 9.85 GB, one combined file for both splits, not separate train and test zips as the dead host used to offer) is fully downloaded and hash-verified | **Confirmed 2026-09-22:** `train.rar` is `Final Train Dataset/`, 3,003 images with matching XML labels (one file, `231.xml`, is not actually XML: it holds YOLO-format label lines, `class_id x y w h` normalised, under a `.xml` name, an upstream data error the converter must detect and skip, not assume away). `test1.rar` is 500 images, **zero annotation files**, Roboflow-style export filenames (`<name>_jpg.rf.<hash>.jpg`). Read together with the Dataverse subtitle ("an international AI-based Dhaka Traffic Detection Challenge"), `test1.rar` is the competition's unlabeled holdout: it has no usable ground truth and is excluded from the pool this project splits. The usable pool is the 3,002 labelled train images |
 | Classes | **Confirmed 2026-09-22, full census over all 60 train sequence files (`src/trafficwatch/data/ua_detrac.py`, cross-checked 2026-10-02 against every real file), 598,281 boxes total:** exactly 4 classes, `car` (503,853), `van` (57,051), `bus` (33,651), `others` (3,726). **No two-wheeler class exists at all**, resolving the D-04 label-noise risk from a hypothetical into a confirmed fact: mixing in DhakaAI's `motorbike`/`scooter` would teach the model a class UA-DETRAC actively contradicts with unlabelled background motorbikes. Per the pre-committed D-04 rule, v1 is the four-class taxonomy (`car, van, bus, other`); a class-agnostic `vehicle` variant is the T3 alternative, not a five-class merge | **Confirmed 2026-09-22, full census over all 3,002 parseable train annotations, 24,368 boxes total, mean 8.12 per image:** 21 distinct classes, exact strings and counts in section 4 below |
 | Extras | **Confirmed 2026-09-22:** `<sequence_attribute camera_state="stable\|unstable" sence_weather="sunny\|cloudy\|rainy\|night"/>` present on every sequence (note the source dataset's own attribute name is `sence_weather`, not `scene_weather`; the converter must use the exact string). `<ignored_region>` present, same `left/top/width/height` box format. Per-target `truncation_ratio` is a continuous 0 to 1 ratio (not a 0/1 flag like DhakaAI's `truncated`), and `<occlusion><region_overlap .../></occlusion>` is present for partially hidden targets. A single-line count of `sence_weather` values across the 61 files totalled 60 for one extraction pass (one file's attribute line did not match that exact single-line pattern despite the string being present); treat the per-sequence weather tally as provisional until the formal `eda_dataset.py` script parses it properly, not by grep | Per-object `<truncated>` and `<difficult>` flags present (both 0/1); no weather or ignored-region metadata (not applicable to still images from mixed sources) |
 | Licence | VERIFY. No terms are shown on the live project page (see Availability); record whatever Google Drive shows when the folder is opened | Confirmed: **CC0 1.0** (`http://creativecommons.org/publicdomain/zero/1.0`), read from the dataset's own Dataverse licence metadata |
 | Availability | The original host (`detrac-db.rit.albany.edu`) is confirmed dead: every published download URL now redirects (HTTP 200) to a generic university lab page with no dataset link. The live replacement is a co-author's project page, `https://sites.google.com/view/daweidu/projects/ua-detrac`, with Google Drive links for DETRAC-Images, DETRAC-Annos, DETRAC-Detections, and DETRAC-Toolkits. **Manual**: Google Drive throttles or blocks scripted bulk downloads of files this large, and no licence text is exposed on that page to capture automatically. A Kaggle mirror also exists but needs the author's own Kaggle account and API key. | Confirmed public and unauthenticated: `fileAccessRequest: false` on the dataset's own metadata, no account, login, or request step. **Scripted**: `scripts/acquire_datasets.py fetch-dhakaai` downloads both files from Harvard Dataverse's documented API and records the manifest entry automatically |
 
-Record all of the above in `data/MANIFEST.json`. If DhakaAI turns out to be images only, it feeds detector training and cross-domain detector evaluation only, and cannot be used for tracking or incident evaluation (log as a scope note; proposal 3.2.3 says "sequences").
+Record all of the above in `data/MANIFEST.json`. If DhakaAI turns out to be images only, it feeds detector training and cross-domain detector evaluation only, and cannot be used for tracking or incident evaluation (log as a scope note; specification 3.2.3 says "sequences").
 
 ## 3. Acquisition rules
 
@@ -79,7 +79,7 @@ Record all of the above in `data/MANIFEST.json`. If DhakaAI turns out to be imag
 | `human hauler` | 169 | other |
 | `wheelbarrow` | 120 | dropped (two/three-wheeler, no v1 class) |
 | `minibus` | 95 | bus |
-| `ambulance` | 60 | other (emergency-vehicle detection is in scope, only emergency notification is not, proposal 1.6) |
+| `ambulance` | 60 | other (emergency-vehicle detection is in scope, only emergency notification is not, specification 1.6) |
 | `taxi` | 60 | car |
 | `army vehicle` | 43 | other |
 | `scooter` | 38 | dropped (two/three-wheeler, no v1 class) |
@@ -144,7 +144,7 @@ For T3 (UA-DETRAC plus DhakaAI), `train` becomes a list `[images/train, images/d
 - Ground-truth trajectory files exported from the XML for oracle-event generation and tracker evaluation.
 - Adjudication sheet template for manual review of flagged events (Tier B).
 
-## 8. Insights checklist for Chapter 5.3
+## 8. Insights checklist for Report section 5.3
 
 Sources and licence; retrieval method; sizes; sequences and frames per split; boxes per class; box-size distribution (small and distant vehicles); weather and night share; ignored-region handling; stride and why; class mapping and label-noise decision; leakage check outcome; before and after counts.
 
